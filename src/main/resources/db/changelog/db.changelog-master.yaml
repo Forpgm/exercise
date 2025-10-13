@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: pgm
+      changes:
+        - createTable:
+            tableName: person
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(50)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: first_name
+                  type: VARCHAR(30)
+              - column:
+                  name: last_name
+                  type: VARCHAR(30)
+              - column:
+                  name: dob
+                  type: DATE
+              - column:
+                  name: tax_number
+                  type: VARCHAR(11)
+                  constraints:
+                    unique: true
+                    nullable: false
