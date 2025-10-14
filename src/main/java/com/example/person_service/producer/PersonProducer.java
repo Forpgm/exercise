@@ -14,10 +14,10 @@ public class PersonProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendPersonCreate(CreatePersonRequest request) {
-        kafkaTemplate.send("person-updates", request);
+        kafkaTemplate.send("CreatePerson", request);
     }
 
     public void sendPersonUpdate(UpdatePersonRequest request) {
-        kafkaTemplate.send("person-updates", request);
+        kafkaTemplate.send("UpdatePerson", request);
     }
 }
