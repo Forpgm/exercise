@@ -11,4 +11,4 @@ COPY target/person-service-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 
 # Run app
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
