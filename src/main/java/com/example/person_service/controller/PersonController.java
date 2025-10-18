@@ -5,7 +5,6 @@ import com.example.person_service.dto.request.CreatePersonRequest;
 import com.example.person_service.dto.request.UpdatePersonRequest;
 import com.example.person_service.dto.response.ApiResponse;
 import com.example.person_service.dto.response.CreatePersonResponse;
-import com.example.person_service.entity.Person;
 import com.example.person_service.producer.PersonProducer;
 import com.example.person_service.service.PersonService;
 import jakarta.validation.Valid;
@@ -34,18 +33,12 @@ public class PersonController {
 
     @PostMapping("/kafka")
     public ResponseEntity<ApiResponse<String>> createPersonKafka(@Valid @RequestBody CreatePersonRequest request) {
-
-
-        // Gửi event qua Kafka, không lưu trực tiếp
         producer.sendPersonCreate(request);
-
-        // Trả về thông báo
         ApiResponse<String> response = ApiResponse.<String>builder()
                 .code(HttpStatus.ACCEPTED.value())
                 .message("Person event sent to Kafka successfully")
                 .result("Event queued for person: " + request.getFirstName())
                 .build();
-
         return ResponseEntity.accepted().body(response);
     }
 
@@ -53,17 +46,12 @@ public class PersonController {
     public ResponseEntity<ApiResponse<String>> updatePersonKafka(@Valid
                                                                  @RequestBody UpdatePersonRequest request) {
 
-
-        // Gửi event qua Kafka, không lưu trực tiếp
         producer.sendPersonUpdate(request);
-
-        // Trả về thông báo
         ApiResponse<String> response = ApiResponse.<String>builder()
                 .code(HttpStatus.ACCEPTED.value())
                 .message("Person event sent to Kafka successfully")
                 .result("Event queued for person: " + request.getFirstName())
                 .build();
-
         return ResponseEntity.accepted().body(response);
     }
 
