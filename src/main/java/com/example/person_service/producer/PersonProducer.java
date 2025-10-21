@@ -1,11 +1,13 @@
 package com.example.person_service.producer;
 
 import com.example.person_service.dto.request.CreatePersonRequest;
+import com.example.person_service.dto.request.StringBatch;
 import com.example.person_service.dto.request.UpdatePersonRequest;
-import com.example.person_service.entity.Person;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,5 +21,13 @@ public class PersonProducer {
 
     public void sendPersonUpdate(UpdatePersonRequest request) {
         kafkaTemplate.send("UpdatePerson", request);
+    }
+
+    public void sendMessages(CreatePersonRequest request) {
+        kafkaTemplate.send("CreatePersonBatch", request);
+    }
+
+    public void sendBatch(List<StringBatch> batch) {
+        kafkaTemplate.send("string-batch-topic", batch);
     }
 }
