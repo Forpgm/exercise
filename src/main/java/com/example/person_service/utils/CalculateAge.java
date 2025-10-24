@@ -8,7 +8,7 @@ import java.time.Period;
 
 @Component
 public class CalculateAge {
-    public int calculateAge(LocalDate dob) {
+    public static int calAge(LocalDate dob) {
         return Period.between(dob, LocalDate.now()).getYears();
     }
 }

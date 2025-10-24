@@ -1,111 +1,107 @@
 package com.example.person_service.controller;
 
-
 import com.example.person_service.dto.request.CreatePersonRequest;
-import com.example.person_service.dto.request.StringBatch;
 import com.example.person_service.dto.request.UpdatePersonRequest;
 import com.example.person_service.dto.response.ApiResponse;
-import com.example.person_service.dto.response.CreatePersonResponse;
-import com.example.person_service.producer.PersonProducer;
+import com.example.person_service.dto.response.PersonResponse;
 import com.example.person_service.service.PersonService;
 import jakarta.validation.Valid;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/persons")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Validated
 public class PersonController {
-
     private final PersonService personService;
-    private final PersonProducer producer;
+    private PersonResponse[] response;
 
     @PostMapping
-    public ApiResponse<CreatePersonResponse> createPerson(@Valid @RequestBody CreatePersonRequest request) {
-        CreatePersonResponse response = personService.createPerson(request);
-        return ApiResponse.<CreatePersonResponse>builder().code(HttpStatus.CREATED.value()).message("Create person " +
-                "successffully").result(response).build();
-    }
-
-    @PostMapping("/kafka")
-    public ResponseEntity<ApiResponse<String>> createPersonKafka(@Valid @RequestBody CreatePersonRequest request) {
-        producer.sendPersonCreate(request);
-        ApiResponse<String> response = ApiResponse.<String>builder()
-                .code(HttpStatus.ACCEPTED.value())
-                .message("Person event sent to Kafka successfully")
-                .result("Event queued for person: " + request.getFirstName())
+    public ApiResponse<PersonResponse> createPerson(
+            @Valid @RequestBody CreatePersonRequest request) {
+        PersonResponse response = personService.createPerson(request);
+        return ApiResponse.<PersonResponse>builder()
+                .code(201)
+                .message("Created Person successfully")
+                .result(response)
                 .build();
-        return ResponseEntity.accepted().body(response);
     }
 
-    @PutMapping("/kafka")
-    public ResponseEntity<ApiResponse<String>> updatePersonKafka(@Valid
-                                                                 @RequestBody UpdatePersonRequest request) {
-
-        producer.sendPersonUpdate(request);
-        ApiResponse<String> response = ApiResponse.<String>builder()
-                .code(HttpStatus.ACCEPTED.value())
-                .message("Person event sent to Kafka successfully")
-                .result("Event queued for person: " + request.getFirstName())
+    @GetMapping("/taxes/{taxNumber}")
+    public ApiResponse<PersonResponse> findByTaxNumber(
+            @PathVariable String taxNumber) {
+        PersonResponse response = personService.findPersonByTaxNumber(taxNumber);
+        return ApiResponse.<PersonResponse>builder()
+                .code(HttpStatus.OK.value())
+                .message("Find person by tax number successfully")
+                .result(response)
                 .build();
-        return ResponseEntity.accepted().body(response);
     }
 
 
-    @GetMapping("/tax-numbers/{taxNumber}")
-    public ApiResponse<CreatePersonResponse> findPersonByTaxNumber(@Valid @PathVariable String taxNumber) {
-        CreatePersonResponse response = personService.findByTaxNumber(taxNumber);
-        return ApiResponse.<CreatePersonResponse>builder().code(HttpStatus.CREATED.value()).message("Find person by " +
-                "tax number successfully").result(response).build();
+    @GetMapping()
+    public ApiResponse<List<PersonResponse>> listAllPersons(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<PersonResponse> response = personService.findAll(pageable);
+        return ApiResponse.<List<PersonResponse>>builder()
+                .code(HttpStatus.OK.value())
+                .message("List persons successfully")
+                .result(response)
+                .build();
     }
 
 
-    @PostMapping("kafka/send-string-batch")
-    public void sendStringBatch(@RequestBody List<StringBatch> items) {
-        items.forEach(System.out::println);
-        producer.sendBatch(items);
+    @GetMapping("/filter")
+    public ApiResponse<List<PersonResponse>> filterPersons(@RequestParam(defaultValue = "Mi") String prefix,
+                                                           @RequestParam(defaultValue = "30") Integer minAge,
+                                                           @RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "2") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<PersonResponse> response = personService.filterPersons(prefix, minAge, pageable);
+        return ApiResponse.<List<PersonResponse>>builder()
+                .code(HttpStatus.OK.value())
+                .message("filter persons successfully")
+                .result(response)
+                .build();
     }
 
-    @PostMapping("kafka/send-batch")
-    public void sendPersonBatch(@RequestParam(defaultValue = "10") int size) {
-        List<CreatePersonRequest> items = generateBatch(size);
-        for (int i = 0; i < size; i++) {
-            producer.sendMessages(items.get(i));
-        }
+    @PutMapping("")
+    public ApiResponse<PersonResponse> updatePerson(@RequestParam String taxId,
+                                                    @Valid @RequestBody UpdatePersonRequest request) {
+        PersonResponse response = personService.updatePerson(taxId, request);
+        return ApiResponse.<PersonResponse>builder()
+                .code(HttpStatus.OK.value())
+                .message("update person successfully")
+                .result(response)
+                .build();
     }
 
-    public List<CreatePersonRequest> generateBatch(int size) {
-        List<CreatePersonRequest> batch = new ArrayList<>();
-        Random random = new Random();
-
-        for (int i = 0; i < size; i++) {
-            String firstName = "First" + (i + 1);
-            String lastName = "Last" + (i + 1);
-
-            // random ngày sinh trong khoảng 1980 - 2010
-            int year = 1980 + random.nextInt(31);
-            int month = 1 + random.nextInt(12);
-            int day = 1 + random.nextInt(28);
-
-            LocalDate dob = LocalDate.of(year, month, day);
-
-            // taxNumber dạng VN + 9 chữ số
-            String taxNumber = "VN" + String.format("%09d", random.nextInt(1_000_000_000));
-
-            batch.add(new CreatePersonRequest(firstName, lastName, dob, taxNumber));
-        }
-
-        return batch;
+    @DeleteMapping()
+    public ApiResponse<Void> deletePerson(
+            @RequestParam String taxId) {
+        personService.deletePerson(taxId);
+        return ApiResponse.<Void>builder()
+                .code(HttpStatus.OK.value())
+                .message("delete person successfully")
+                .build();
     }
+
+
 }

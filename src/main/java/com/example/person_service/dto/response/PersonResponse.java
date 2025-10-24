@@ -3,7 +3,8 @@ package com.example.person_service.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.UUID;
 
 
 @Data
@@ -13,10 +14,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreatePersonResponse {
-    String id;
+public class PersonResponse {
+    UUID id;
     String firstName;
     String lastName;
-    int age;
+    Integer age;
     String taxNumber;
+    BigDecimal taxDebt;
 }
