@@ -49,7 +49,7 @@ public class KafkaConfiguration {
     private final FailPersonEventService failPersonEventService;
     private final PersonEventMapper personEventMapper;
     private final String manualConsumptionTopic = "manual-consumption-topic";
-
+    private final String group_id = "manual-consumption-group";
 
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
@@ -98,11 +98,14 @@ public class KafkaConfiguration {
                                 record.value());
                         FailPersonEvent failPersonEvent = null;
                         if (record.value() instanceof CreatePersonEvent) {
-                            failPersonEvent = personEventMapper.extractCreatePersonEvent((CreatePersonEvent) record.value());
+                            failPersonEvent =
+                                    personEventMapper.extractCreatePersonEvent((CreatePersonEvent) record.value());
                         } else if (record.value() instanceof ReadPersonEvent) {
-                            failPersonEvent = personEventMapper.extractReadPersonEvent((ReadPersonEvent) record.value());
+                            failPersonEvent =
+                                    personEventMapper.extractReadPersonEvent((ReadPersonEvent) record.value());
                         } else if (record.value() instanceof UpdatePersonEvent) {
-                            failPersonEvent = personEventMapper.extractUpdatePersonEvent((UpdatePersonEvent) record.value());
+                            failPersonEvent =
+                                    personEventMapper.extractUpdatePersonEvent((UpdatePersonEvent) record.value());
                         }
                         failPersonEventService.save(failPersonEvent);
                     } catch (Exception dbException) {
@@ -131,8 +134,10 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(KafkaTemplate<String, Object> kafkaTemplate) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(KafkaTemplate<String
+            , Object> kafkaTemplate) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setBatchListener(false);
@@ -142,7 +147,8 @@ public class KafkaConfiguration {
 
     @Bean("batchKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaBatchListenerContainerFactory(KafkaTemplate<String, Object> kafkaTemplate) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(batchConsumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setBatchListener(true);
@@ -161,7 +167,7 @@ public class KafkaConfiguration {
     @Bean("manualConsumerFactory")
     public ConsumerFactory<String, Object> manualConsumerFactory() {
         Map<String, Object> configProps = kafkaProperties.buildConsumerProperties(new DefaultSslBundleRegistry());
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "manual-consumption-group");
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, group_id);
         configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);

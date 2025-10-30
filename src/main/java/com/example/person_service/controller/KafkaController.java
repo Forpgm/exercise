@@ -150,8 +150,6 @@ public class KafkaController {
             ReadPersonEvent readPersonEvent = MockDataGenerator.generateRandomReadPersonRequest(i);
             eventList.add(readPersonEvent);
 
-            UpdatePersonEvent updatePersonEvent = MockDataGenerator.generateRandomUpdatePersonRequest(i);
-            eventList.add(updatePersonEvent);
         }
         for (BaseEvent baseEvent : eventList) {
             String key = "batch-" + System.currentTimeMillis();
