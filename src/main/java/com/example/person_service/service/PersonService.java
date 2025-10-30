@@ -10,11 +10,13 @@ import com.example.person_service.exception.ErrorCode;
 import com.example.person_service.repository.PersonRepository;
 import com.example.person_service.utils.CalculateAge;
 import jakarta.transaction.Transactional;
+
 import java.math.BigDecimal;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -34,14 +36,16 @@ public class PersonService {
     public PersonResponse createPerson(CreatePersonRequest request) {
         if (!request.getTaxNumber().matches(VIETNAM_TAX_PATTERN)) {
             log.error("Invalid tax number: {}", request.getTaxNumber());
-            throw new AppException(new ErrorCode(HttpStatus.BAD_REQUEST.value(), "Tax number must follow format: VN + 9 digits"));
+            throw new AppException(new ErrorCode(HttpStatus.BAD_REQUEST.value(), "Tax number must follow format: VN +" +
+                    " 9 digits"));
         }
         if (personRepository.findByTaxNumber(request.getTaxNumber()).isPresent()) {
             log.warn("Person with TAX number {} already exists", request.getTaxNumber());
             throw new AppException(new ErrorCode(HttpStatus.BAD_REQUEST.value(), "Tax number already exists"));
         }
 
-        Person person = Person.builder().firstName(request.getFirstName()).lastName(request.getLastName()).dob(request.getDob()).taxNumber(request.getTaxNumber()).build();
+        Person person =
+                Person.builder().firstName(request.getFirstName()).lastName(request.getLastName()).dob(request.getDob()).taxNumber(request.getTaxNumber()).build();
         Person savedPerson = personRepository.save(person);
 
         return PersonResponse.builder().id(savedPerson.getId()).firstName(savedPerson.getFirstName()).lastName(savedPerson.getLastName()).age(CalculateAge.calAge(request.getDob())).taxNumber(savedPerson.getTaxNumber()).taxDebt(savedPerson.getTaxDebt()).build();
@@ -49,7 +53,8 @@ public class PersonService {
     }
 
     public PersonResponse findPersonByTaxNumber(String taxNumber) {
-        var person = personRepository.findByTaxNumber(taxNumber).orElseThrow(() -> new AppException(new ErrorCode(404, "Person not found")));
+        var person = personRepository.findByTaxNumber(taxNumber).orElseThrow(() -> new AppException(new ErrorCode(404
+                , "Person not found")));
         return PersonResponse.builder().id(person.getId()).firstName(person.getFirstName()).lastName(person.getLastName()).age(CalculateAge.calAge(person.getDob())).taxNumber(person.getTaxNumber()).taxDebt(person.getTaxDebt() == null ? BigDecimal.ZERO : person.getTaxDebt()).build();
     }
 
@@ -67,7 +72,8 @@ public class PersonService {
     }
 
     public List<PersonResponse> filterPersons(String prefix, int minAge, Pageable pageable) {
-//        Specification<Person> specification = Specification.where(PersonSpecification.hasNameStartsWithIgnoreCase(prefix)).and(PersonSpecification.isOlderThan(minAge));
+//        Specification<Person> specification = Specification.where(PersonSpecification.hasNameStartsWithIgnoreCase
+//        (prefix)).and(PersonSpecification.isOlderThan(minAge));
 //        var persons = personRepository.findAll(specification);
 //        PersonResponse[] responseArray = new PersonResponse[persons.size()];
 //        for (int i = 0; i < persons.size(); i++) {
@@ -99,12 +105,15 @@ public class PersonService {
     }
 
     public PersonResponse updatePerson(String taxId, UpdatePersonRequest request) {
-        var existingPerson = personRepository.findByTaxNumber(taxId).orElseThrow(() -> new AppException(new ErrorCode(HttpStatus.NOT_FOUND.value(), "Person not found")));
+        var existingPerson =
+                personRepository.findByTaxNumber(taxId).orElseThrow(() -> new AppException(new ErrorCode(HttpStatus.NOT_FOUND.value(), "Person not found")));
         Person updatedPerson = Person.builder()
                 .id(existingPerson.getId())
                 .taxNumber(existingPerson.getTaxNumber())
-                .firstName(isNotBlank(request.getFirstName()) ? request.getFirstName().trim() : existingPerson.getFirstName())
-                .lastName(isNotBlank(request.getLastName()) ? request.getLastName().trim() : existingPerson.getLastName())
+                .firstName(isNotBlank(request.getFirstName()) ? request.getFirstName().trim() :
+                        existingPerson.getFirstName())
+                .lastName(isNotBlank(request.getLastName()) ? request.getLastName().trim() :
+                        existingPerson.getLastName())
                 .dob(request.getDob() != null ? request.getDob() : existingPerson.getDob())
                 .build();
 
@@ -124,7 +133,8 @@ public class PersonService {
     }
 
     public void handleTaxCalculation(CalculateTaxRequest request) {
-        var existingPerson = personRepository.findByTaxNumber(request.getTaxNumber()).orElseThrow(() -> new AppException(new ErrorCode(HttpStatus.NOT_FOUND.value(), "Person not found")));
+        var existingPerson =
+                personRepository.findByTaxNumber(request.getTaxNumber()).orElseThrow(() -> new AppException(new ErrorCode(HttpStatus.NOT_FOUND.value(), "Person not found")));
         BigDecimal taxAmount;
         if (request.getAmount() != null) {
             taxAmount = request.getAmount();
@@ -144,7 +154,8 @@ public class PersonService {
         log.warn("Simulating timeout for tax number: {} on attempt: {}", taxNumber, currentAttempt);
 
         if (currentAttempt <= 4) {
-            SocketTimeoutException timeoutException = new SocketTimeoutException("External service timeout - attempt " + currentAttempt);
+            SocketTimeoutException timeoutException = new SocketTimeoutException("External service timeout - attempt "
+                    + currentAttempt);
             throw new RuntimeException("Service timeout occurred", timeoutException);
         } else {
             createPerson(request);

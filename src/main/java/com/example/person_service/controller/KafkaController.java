@@ -92,34 +92,26 @@ public class KafkaController {
     }
 
     @PostMapping("/send-success-batch")
-    public ResponseEntity<Map<String, Object>> sendSuccessBatch(@RequestParam(defaultValue = "8") int size) {
-        log.info("Sending {} separate messages", size);
-        List<CreatePersonRequest> personList = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
+    public ResponseEntity<Map<String, Object>> sendSuccessBatch(@RequestBody List<CreatePersonRequest> requests) {
+        for (int i = 0; i < requests.size(); i++) {
             String key = "batch-" + System.currentTimeMillis() + i;
-            personList.add(MockDataGenerator.createTestSuccessPersonRequest(i));
-            kafkaProducerService.sendSuccessPersonEventBatch(MockDataGenerator.createTestSuccessPersonRequest(i), key);
+            kafkaProducerService.sendSuccessPersonEventBatch(requests.get(i), key);
         }
 
         return ResponseEntity.ok(Map.of(
-                "personsInBatch", size,
-                "message", "Sent 1 message containing " + size + " persons"
+                "personsInBatch", requests.size()
         ));
     }
 
 
     @PostMapping("/send-fail-batch-non-blocking")
-    public ResponseEntity<Map<String, Object>> sendFailBatchNonBlocking(@RequestParam(defaultValue = "8") int size) {
-        log.info("Sending {} separate messages", size);
-        List<CreatePersonRequest> personList = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
+    public ResponseEntity<Map<String, Object>> sendFailBatchNonBlocking(@RequestBody List<CreatePersonRequest> requests) {
+        for (int i = 0; i < requests.size(); i++) {
             String key = "batch-" + System.currentTimeMillis() + i;
-            personList.add(MockDataGenerator.createTestFailPersonRequest(i));
-            kafkaProducerService.sendFailPersonEventBatchWithNonBlockingRetry(MockDataGenerator.createTestFailPersonRequest(i), key);
+            kafkaProducerService.sendFailPersonEventBatchWithNonBlockingRetry(requests.get(i), key);
         }
         return ResponseEntity.ok(Map.of(
-                "personsInBatch", size,
-                "message", "Sent 1 message containing " + size + " persons"
+                "personsInBatch", requests.size()
         ));
     }
 
