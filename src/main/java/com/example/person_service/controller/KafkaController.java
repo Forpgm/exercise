@@ -6,10 +6,12 @@ import com.example.person_service.intergration.kafka.consumer.BatchManualAckCons
 import com.example.person_service.service.KafkaProducerService;
 import com.example.person_service.utils.MockDataGenerator;
 import jakarta.validation.Valid;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -78,16 +80,14 @@ public class KafkaController {
     }
 
     @PostMapping("/send-fail-batch")
-    public ResponseEntity<Map<String, Object>> sendFailBatch(@RequestParam(defaultValue = "8") int size) {
-        log.info("Sending {} messages", size);
-        List<CreatePersonRequest> personList = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
+    public ResponseEntity<Map<String, Object>> sendFailBatch(@RequestBody List<CreatePersonRequest> requests) {
+
+        for (int i = 0; i < requests.size(); i++) {
             String key = "batch-" + System.currentTimeMillis() + i;
-            personList.add(MockDataGenerator.createTestFailPersonRequest(i));
-            kafkaProducerService.sendFailPersonEventBatch(MockDataGenerator.createTestFailPersonRequest(i), key);
+            kafkaProducerService.sendFailPersonEventBatch(requests.get(i), key);
         }
         return ResponseEntity.ok(Map.of(
-                "personsInBatch", size
+                "personsInBatch", requests.size()
         ));
     }
 
